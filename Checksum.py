@@ -1,32 +1,39 @@
-import subprocess
 import os
+import sys
+import subprocess
 
-directory_items = {}
-algorithm_list = ["MD5", "SHA1", "SHA256"]
-for i, j in enumerate(os.scandir()):
-    directory_items[i+1] = j
+file1 = sys.argv[1].strip('"')
+file2 = sys.argv[2].strip('"')
+algorithm = sys.argv[3].strip('"')
 
-print("Files in Directory: ")
-for i in list(directory_items.keys()):
-    print(f'\t{i}. {directory_items.get(i).name}')
+if not os.path.isfile(file1):
+    print(f"[py] File 1: {file1} does not exist")
+    file1 = None
+else:
+    print(f"[py] File 1: {file1}")
 
-file_number = int(input("Enter the file number: "))
-file = directory_items.get(file_number)
+print("[py] File 2:", file2)
+print("[py] Algorithm:", algorithm)
 
-print("\nHashing Algorithms: ")
-for i, j in enumerate(algorithm_list):
-    print(f'\t{i+1}. {j}')
 
-algorithm = int(input("\nEnter the Algorithm Number: "))
-user_hashvalue = input("Enter the hashvalue (Press enter to skip): ")
+def hash_file(file, algorithm):
+    hash_value = subprocess.run(
+        f'certutil -hashfile "{file}" {algorithm}', stdout=subprocess.PIPE
+    )
+    hash_value = hash_value.stdout.decode("utf-8").splitlines()[1]
+    return hash_value
 
-response = subprocess.run(f"certutil -hashfile \"{file.name}\" {algorithm_list[algorithm-1]}", stdout=subprocess.PIPE)
-real_hashvalue = response.stdout.decode('utf-8').splitlines()[1]
-print();
-print(f"Generated {algorithm_list[algorithm-1]} value:", real_hashvalue)
-if(user_hashvalue != ""):
-    print("User:", user_hashvalue)
-    # print(real_hashvalue == user_hashvalue)
-    print("\nChecksums are Matching!" if real_hashvalue.lower() == user_hashvalue.lower() else "Checksums are not Matching")
 
-hold = input()
+if file1 is not None:
+    file1_hash = hash_file(file1, algorithm)
+    print("[py] File 1 hash:", file1_hash)
+file2_hash = hash_file(file2, algorithm)
+print("[py] File 2 hash:", file2_hash)
+
+if file1 is not None:
+    if file1_hash == file2_hash:
+        print("[py] FILES MATCH!")
+    else:
+        print("[py] FILES DO NOT MATCH!")
+else:
+    print("[py] File 1 does not exist, cannot compare hashes")
